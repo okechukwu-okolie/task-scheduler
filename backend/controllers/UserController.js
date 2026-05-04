@@ -1,13 +1,16 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const userSignUp = async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
     //testing for presence of username or email
-    const existingUsername = await User.findOne({  username } );
-    const existingEmail = await User.findOne({  email } );
+    const existingUsername = await User.findOne({ username });
+    const existingEmail = await User.findOne({ email });
     if (existingUsername) {
       // console.log('username or email already exists')
       return res.status(400).json({
@@ -31,7 +34,7 @@ export const userSignUp = async (req, res) => {
     });
 
     await newUser.save();
-    console.log('user created successfully')
+    console.log("user created successfully");
     res.status(201).json({
       message: "User created successfully",
     });
@@ -43,30 +46,38 @@ export const userSignUp = async (req, res) => {
   }
 };
 
-export const userSignIn = async (req,res) =>{
-    const {usernameOrEmail, password} = req.body
+export const userSignIn = async (req, res) => {
+  const { usernameOrEmail, password } = req.body;
 
-    try {
-        const existingUser = User.findOne({$or : [{username:usernameOrEmail},{email:usernameOrEmail}]})
-        if(!existingUser){
-            return res.status(400).json({
-                message:'User does not exist. Please sign up first'
-            })
-        }
-        const encryptedPassword = User.findOne({password})
-        const checkedPassword = await bcrypt.compare(password, encryptedPassword)
-        if(!checkedPassword){
-            return res.status(400).json({
-                message:'User does not exist. Please sign up first'
-            })
-        }
-        res.status(201).json({
-            message:'User successfully logged in.'
-        })
-    } catch (error) {
-        console.log('Internal Error', error)
-        res.status(500).json({
-            message:'Internal server error'
-        })
+  try {
+    const existingUser = User.findOne({
+      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
+    if (!existingUser) {
+      return res.status(400).json({
+        message: "User does not exist. Please sign up first",
+      });
     }
-}
+
+    const token = jwt.sign(
+      existingUser._id,
+       process.env.jwt_secret_key,
+        { expiresIn: "1h"});
+
+    const encryptedPassword = existingUser.password;
+    const checkedPassword = await bcrypt.compare(password, encryptedPassword);
+    if (!checkedPassword) {
+      return res.status(400).json({
+        message: "User does not exist. Please sign up first",
+      });
+    }
+    res.status(201).json({
+      message: "User successfully logged in.",
+    });
+  } catch (error) {
+    console.log("Internal Error", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};

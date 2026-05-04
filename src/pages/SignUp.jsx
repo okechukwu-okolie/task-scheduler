@@ -2,7 +2,7 @@
 
 import { Link, useNavigate } from 'react-router-dom'
 import instance from '../files/axios.Create.jsx'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 
 
@@ -16,6 +16,8 @@ const SignUp = () => {
   const [emailError, setEmailError] = useState(false)
   const [fieldsError, setFieldsError] = useState(false)
   const navigate = useNavigate()
+
+
 
 
 

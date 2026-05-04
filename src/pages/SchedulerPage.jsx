@@ -1,71 +1,124 @@
-
 import { FaCheck, FaEdit, FaRegUserCircle, FaTrash } from "react-icons/fa";
 import Button from "../components/Button.jsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import instance from "../files/axios.Create.jsx";
 
 
 const SchedulerPage = () => {
   const [task, setTask] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [taskcreated, setTaskCreated] = useState(false);
   const [inputError, setInputError] = useState(false);
   const [schedules, setSchedules] = useState([]);
   const [strikeThrough, setStrikeThrough] = useState(false);
   const [completed, setCompleted] = useState(false)
-  const [editing, setEditing] = useState([])
-  // const [localArray, setLocalArray] = useState([])
+  // const [editing, setEditing] = useState([])
 
-  // localStorage.setItem('taskList',JSON.stringify(schedules))
-  // const localArrayData = JSON.parse(localStorage.getItem('taskList'))
-  // setLocalArray(localArrayData)
+//this useeffect is for fetching the tasks from the database and setting it to the state variable schedules. It runs only once when the component mounts.
+    useEffect (()=>{
+      // const fetchTasks = async()=>
+      //   try {
+      //     const res = await instance.get('/api/getTasks')
+      //     setSchedules(res.data.data)
+      //   } catch (error) {
+      //     console.log(error)
+      //   }
+      // }
+      // fetchTasks()
+  },[])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e)=> {
     e.preventDefault();
+
     if (!task.trim() || !date.trim() || !time.trim() ) {
       return setInputError(true);
     }
     setInputError(false);
+    const schedule = { task, date, time, completed: false };
+    
+    if(task && date && time){
+      try {
+        const res = await instance.post('/createTask', schedule)
+        console.log('Task created successfully:', res.data);
+        
 
-    const schedule = { task, date, time, completed, id: Date.now() };
-    setSchedules((schedules) => [...schedules, schedule]);
+
+        if (res.status === 201) {
+          setTaskCreated(true);
+          setSchedules(prev => [res.data.data, ...prev]); // Add new task to the top of the list
+          
+          
+          setTask("");
+          setDate("");
+          setTime("");
+        }
+
+          
 
 
-    setTask("");
-    setDate("");
-    setTime("");
+        
+      } catch (error) {
+        console.log('there was an error creating the task',error)
+        
+      }
+      finally{
+        setTimeout(() => {
+          setTaskCreated(false)
+          setInputError(false)
+        }, 3000);
+
+      }
+
+
   };
 
-  const handleDelete = (id) => {
-    setSchedules(schedules.filter((item) => item.id !== id));
-  };
+
+
+ const handleDelete = async (id) => {
+  try {
+    // FIX: Delete from database first
+    await instance.delete(`/deleteTask/${id}`);
+    
+    // Then update the local state (filtering by MongoDB _id)
+    setSchedules(schedules.filter((item) => item._id !== id));
+  } catch (error) {
+    console.error("Delete failed:", error);
+  }
+};
 
  
 
-  const handleStrikeThrough = (id)=>{
-    const newArr = schedules.find(item => item.id === id && setStrikeThrough(!strikeThrough) )
-    console.log(newArr)
-  }
 
-  const handleEdit = (id)=>{
-    const editedTask = schedules.filter(item => item.id === id)
-    setEditing(editedTask)
+
+const handleStrikeThrough = async (id, currentStatus) => {
+  try {
+    // FIX: Toggle the completed status in the database
+    await instance.patch(`/updateTask/${id}`, { completed: !currentStatus });
     
-    // editing.map(edit => {task:edit.task; date: edit.date; time: edit.time})
-
-    // prev => prev.map(edit =>edit.task)
-
-    setTask(editing.map(edit =>edit.task))
-    setDate(editing.map(edit =>edit.date))
-    setTime(editing.map(edit =>edit.time))
-    
-    setSchedules(schedules.filter(item => item.id !== id))
-
-    // setTask(editedTask)
-    // setDate(editedTask)
-    // setTime(editedTask)
-
-    console.log(editedTask)
+    // Update local state to show the strike-through
+    setSchedules(schedules.map(item => 
+      item._id === id ? { ...item, completed: !currentStatus } : item
+    ));
+  } catch (error) {
+    console.error("Toggle failed:", error);
   }
+};
+
+
+
+
+ const handleEdit = (item) => {
+  // FIX: Populate the form fields with the existing task data
+  setTask(item.task);
+  setDate(item.date);
+  setTime(item.time);
+  
+  // Optional: Remove from list to "replace" it upon resubmit, 
+  // or set an 'isEditing' state with the ID to perform a PUT request later.
+  setSchedules(schedules.filter(i => i._id !== item._id));
+};
+}
 
 
   return (
@@ -143,6 +196,11 @@ const SchedulerPage = () => {
                 Input all the fields before adding a task.
               </p>
             )}
+            {/* {taskCreated && (
+              <p className="text-green-500">
+                Task created successfully!
+              </p>
+            )}     */}
           </div>
         </div>
       </form>

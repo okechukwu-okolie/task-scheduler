@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import entryRoute from './routes/UserRoutes.js'
 // import { connectDB } from './Database/db.js'
 import mongoose from 'mongoose'
+import router from './routes/TaskRoutes.js'
 
 dotenv.config()
 
@@ -21,7 +22,7 @@ app.use(cors())
 
 //routes
 app.use('/api', entryRoute)
-// app.get('/app',entryRoute)
+app.use('/api', router)
 
 
 
