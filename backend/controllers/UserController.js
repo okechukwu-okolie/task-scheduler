@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
 
@@ -7,15 +6,22 @@ export const userSignUp = async (req, res) => {
 
   try {
     //testing for presence of username or email
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
+    const existingUsername = await User.findOne({  username } );
+    const existingEmail = await User.findOne({  email } );
+    if (existingUsername) {
+      // console.log('username or email already exists')
       return res.status(400).json({
-        message: "Username or Email already exists",
+        message: "Username already exists",
+      });
+    }
+    if (existingEmail) {
+      return res.status(401).json({
+        message: "Email already exists",
       });
     }
 
     //encrypting the password
-    const encryptedPassword = await bcrypt.hash("password", 10);
+    const encryptedPassword = await bcrypt.hash(password, 10);
 
     //creating a new instance of a user into the database
     const newUser = new User({
@@ -25,6 +31,7 @@ export const userSignUp = async (req, res) => {
     });
 
     await newUser.save();
+    console.log('user created successfully')
     res.status(201).json({
       message: "User created successfully",
     });

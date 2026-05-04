@@ -1,12 +1,8 @@
-import React, { useState } from "react";
+
 import { FaCheck, FaEdit, FaRegUserCircle, FaTrash } from "react-icons/fa";
-// import InputComponent from "../components/InputComponent";
-import { FaDeleteLeft } from "react-icons/fa6";
-import { Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
-import Header from "../components/Header.jsx";
-import { person, taskDatabase } from "../files/export_files.js";
-import { useEffect } from "react";
+import { useState } from "react";
+
 
 const SchedulerPage = () => {
   const [task, setTask] = useState("");
@@ -14,7 +10,6 @@ const SchedulerPage = () => {
   const [time, setTime] = useState("");
   const [inputError, setInputError] = useState(false);
   const [schedules, setSchedules] = useState([]);
-  const [isChecked, setIsChecked] = useState(false)
   const [strikeThrough, setStrikeThrough] = useState(false);
   const [completed, setCompleted] = useState(false)
   const [editing, setEditing] = useState([])
@@ -44,10 +39,7 @@ const SchedulerPage = () => {
     setSchedules(schedules.filter((item) => item.id !== id));
   };
 
-  const handleChecked = (id, e) => {
-    const isNowChecked = setIsChecked(e.target.checked)
-     setSchedules(prevList => prevList.map(item=> item.id === id ? {...item, completed: isNowChecked}: item)) 
-  }
+ 
 
   const handleStrikeThrough = (id)=>{
     const newArr = schedules.find(item => item.id === id && setStrikeThrough(!strikeThrough) )
@@ -93,13 +85,7 @@ const SchedulerPage = () => {
         className="bg-white m-3 flex flex-col p-4 rounded-2xl"
       >
         <h2 className="text-semibold text-[18px]">Enter Task Title</h2>
-        {/* <InputComponent
-          inputType="text"
-          inputValue={task}
-          inputOnChange={(e) => setTask(e.target.value)}
-          classname="border-b-black border-2 w-75 h-12 rounded-[7px]      mx-8 px-2"
-          placeholder="e.g finalize project"
-        /> */}
+       
          <label htmlFor="" className='block mb-2'>
             
         </label>
@@ -169,13 +155,7 @@ const SchedulerPage = () => {
               key={item.id}
               className="bg-white m-3 flex justify-between items-center px-3 rounded-2xl"
             >
-              <div>
-                <input type="checkbox"
-                       name="done"
-                       id=""
-                       checked={isChecked}
-                       onChange={(e)=>handleChecked(item.id, e)}/>
-              </div>
+          
               <div>
                 <div
                   className=
