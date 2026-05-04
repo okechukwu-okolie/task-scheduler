@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import InputComponent from '../components/InputComponent.jsx'
 
 const SignIn = () => {
-  const [email,setEmail] = useState('')
-  const [username,setUsername] = useState('')
+  const [password,setPassword] = useState('')
+  const [usernameOrEmail,setUsernameOrEmail] = useState('')
   const[err, setErr] = useState(false)
   const[err1, setErr1] = useState(false)
   const [database,setDatabase] = useState([])
@@ -12,7 +12,7 @@ const SignIn = () => {
 
    const handleSubmit = (e)=>{
     e.preventDefault()
-    if(!email || !username ){
+    if(!password || !usernameOrEmail ){
        return setErr(true)
     }
     setErr(false)
@@ -20,13 +20,13 @@ const SignIn = () => {
     console.log(database)
 
 
-    if(database.some(user => user.username || user.email)){
+    if(database.some(user => user.usernameOrEmail || user.password)){
       return setErr(true)
     }
     setErr(false)
 
-    setUsername('')
-    setEmail('')
+    setUsernameOrEmail('')
+    setPassword('')
   
 
   }
@@ -42,23 +42,23 @@ const SignIn = () => {
         </div>
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
         
-            <InputComponent 
-              inputName = 'Email'
-              inputType = 'email'
-              inputValue = {email}
-              inputOnChange = {(e)=>setEmail(e.target.value)}
-              classname='border-b-black border-2 w-100 h-12 rounded-[7px] mx-8 px-2'
-              />
-              <div className='-mt-4 px-8'>{err && <p className='text-red-700 text-[15px]'>Email already exists. Try another</p>}</div>
-
-
           <InputComponent 
-            inputName = 'Username'
-            inputType = 'username'
-            inputValue = {username}
-            inputOnChange = {(e)=>setUsername(e.target.value)}
+            inputName = 'Username or Email'
+            inputType = 'text'
+            inputValue = {usernameOrEmail}
+            inputOnChange = {(e)=>setUsernameOrEmail(e.target.value)}
             classname='border-b-black border-2 w-100 h-12 rounded-[7px] mx-8 px-2'
             />
+            <InputComponent 
+              inputName = 'Password'
+              inputType = 'password'
+              inputValue = {password}
+              inputOnChange = {(e)=>setPassword(e.target.value)}
+              classname='border-b-black border-2 w-100 h-12 rounded-[7px] mx-8 px-2'
+              />
+
+
+              <div className='-mt-4 px-8'>{err && <p className='text-red-700 text-[15px]'>Email already exists. Try another</p>}</div>
             <button className='bg-blue-500  w-60 h-12 rounded-[7px] mx-8 mt-10'>Sign In</button>
 
             <div className='text-center text-[18px]'>
