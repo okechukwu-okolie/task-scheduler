@@ -1,13 +1,15 @@
 //import statements
+import dns from 'node:dns';// this line and the other line of code were added to eliminate the error related
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import entryRoute from './routes/UserRoutes.js'
-// import { connectDB } from './Database/db.js'
 import mongoose from 'mongoose'
 import router from './routes/TaskRoutes.js'
 
 dotenv.config()
+dns.setServers(['8.8.8.8', '1.1.1.1']);//to lack of connection to the database
+
 
 //defining the server and port 
 const app = express()
@@ -26,14 +28,6 @@ app.use('/api', router)
 
 
 
-//mongoose
-// connectDB(dbKey)
-
-// const connectDB = async(connectionKey)=>{
-// await mongoose.connect(connectionKey)
-// console.log('Database connected successfully')
-// } 
-// connectDB(dbKey)
 mongoose.connect(dbKey)
 .then(()=>{
     console.log('Database connected successfully')

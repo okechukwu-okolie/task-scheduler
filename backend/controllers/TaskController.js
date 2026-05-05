@@ -1,36 +1,5 @@
 import { Task } from "../models/taskModel.js"
 
-// export const createTask = async (req, res) =>{
-//     const {task, date, time} = req.body
-
-//     if(!task.trim() ||  !date.trim()  || !time || time.trim()){
-//         return res.status(400).json({
-//             message:'Task is required'
-//         })
-//     }
-
-//     try {
-//         const newTask = await Task.create({
-//             task,
-//             date,
-//             time,
-//             user: req.user.id
-//         })
-//         // await newTask.save() // not needed since create already saves the document to the database
-//         res.status(201).json({
-//             message:'Task created successfully',
-//             data: newTask
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).json({
-//             message:'Internal server error'
-//         })
-//     }
-// }
-
-
-
 
 export const createTask = async (req, res) => {
     const { task, date, time } = req.body;
@@ -46,17 +15,21 @@ export const createTask = async (req, res) => {
     try {
         // 2. Creation
         // Ensure req.user exists (populated by your auth middleware)
-        if (!req.user || !req.user.id) {
+        
+        if (!req.user) {
             return res.status(401).json({ message: "User not authenticated" });
         }
-
+        if (!req.user.id) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+        console.log('validated the task owner')
         const newTask = await Task.create({
             task,
             date,
             time,
-            user: req.user.id
+            user: req.user.id || req.user
         });
-
+        console.log(newTask)
         // 3. Success Response
         res.status(201).json({
             message: 'Task created successfully',

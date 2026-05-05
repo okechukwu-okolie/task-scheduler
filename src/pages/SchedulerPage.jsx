@@ -39,7 +39,9 @@ const SchedulerPage = () => {
     
     if(task && date && time){
       try {
-        const res = await instance.post('/createTask', schedule)
+        const res = await instance.post('/createTask', schedule ,{
+  headers: { Authorization: `Bearer ${your_jwt_token}` }
+})
         console.log('Task created successfully:', res.data);
         
 
