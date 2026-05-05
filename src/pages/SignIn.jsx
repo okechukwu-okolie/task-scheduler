@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 
 const SignIn = () => {
+  
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [err, setErr] = useState(false);  // Empty fields error
@@ -31,7 +32,7 @@ const SignIn = () => {
     };
 
     try {
-      console.log('testing after the server')
+      //we brought in the axios instance 
       const res = await instance.post('/signIn', credentials);
       // Axios considers any 2xx status a success. 
       // Checking for res.data.token is usually safer than a specific status code.
