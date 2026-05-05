@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import { User } from '../models/userModel.js';
 
 
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
     let token;
 
     // Check if the header exists and starts with 'Bearer'
@@ -28,4 +28,11 @@ const protect = async (req, res, next) => {
     }
 };
 
-export default protect
+
+
+//here the token for user validation is generated here, the token will be used in the frontend to validate the user and to access the protected routes
+export const generateToken = (id) =>{
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d',
+    });
+}

@@ -1,7 +1,7 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { generateToken } from "../middleware/userMiddleware.js";
 dotenv.config();
 
 export const userSignUp = async (req, res) => {
@@ -11,6 +11,8 @@ export const userSignUp = async (req, res) => {
     //testing for presence of username or email
     const existingUsername = await User.findOne({ username });
     const existingEmail = await User.findOne({ email });
+
+
     if (existingUsername) {
       // console.log('username or email already exists')
       return res.status(400).json({
@@ -26,18 +28,28 @@ export const userSignUp = async (req, res) => {
     //encrypting the password
     const encryptedPassword = await bcrypt.hash(password, 10);
 
-    //creating a new instance of a user into the database
-    const newUser = new User({
+   
+    // await newUser.save();
+      const newUser = await User.create({
       username,
       email,
       password: encryptedPassword,
     });
 
-    await newUser.save();
+    if (!newUser) {
+      return res.status(400).json({
+        message: "User creation failed",
+      });
+    }
+
     console.log("user created successfully");
+    console.log(newUser)
     res.status(201).json({
       message: "User created successfully",
-    });
+      token: generateToken(newUser._id),
+    });   
+    
+
   } catch (error) {
     console.log(error);
     res.status({
@@ -47,31 +59,39 @@ export const userSignUp = async (req, res) => {
 };
 
 export const userSignIn = async (req, res) => {
-  const { usernameOrEmail, password } = req.body;
 
+  //destructuring the username or email and password from the request body
+  const { identifier, password } = req.body;
+   
+  //checking if the user exists in the database by either username or email
   try {
-    const existingUser = User.findOne({
-      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
-    });
+    const existingUser = await User.findOne({username: identifier})
+    
+      //if the user does not exist, return an error message
     if (!existingUser) {
       return res.status(400).json({
-        message: "User does not exist. Please sign up first",
+        message: "Invalid credentials",
       });
-    }
+    }   
 
-    const token = jwt.sign(
-      existingUser._id,
-       process.env.jwt_secret_key,
-        { expiresIn: "1h"});
-
+    //appraising the password
     const encryptedPassword = existingUser.password;
     const checkedPassword = await bcrypt.compare(password, encryptedPassword);
+
+    //if the password is incorrect, return an error message
     if (!checkedPassword) {
       return res.status(400).json({
-        message: "User does not exist. Please sign up first",
+        message: "Invalid credentials",
       });
     }
+
+    //here the token is generated and sent to the frontend for user validation and to access protected routes
+    console.log(existingUser)
     res.status(201).json({
+      _id: existingUser._id,
+      username: existingUser.username,
+      email: existingUser.email,
+      token: generateToken(existingUser._id),
       message: "User successfully logged in.",
     });
   } catch (error) {
