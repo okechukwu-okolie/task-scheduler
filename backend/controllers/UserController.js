@@ -70,7 +70,7 @@ export const userSignIn = async (req, res) => {
       //if the user does not exist, return an error message
     if (!existingUser) {
       return res.status(400).json({
-        message: "Invalid credentials",
+        message: "Invalid credentials, provide correct username or email",
       });
     }   
 
@@ -81,7 +81,7 @@ export const userSignIn = async (req, res) => {
     //if the password is incorrect, return an error message
     if (!checkedPassword) {
       return res.status(400).json({
-        message: "Invalid credentials",
+        message: "Invalid credentials, provide correct username or email",
       });
     }
 

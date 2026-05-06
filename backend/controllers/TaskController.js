@@ -6,7 +6,7 @@ export const createTask = async (req, res) => {
 
     // 1. Fixed Validation Logic
     // We check if any of these are missing or just empty whitespace.
-    if (!task?.trim() || !date?.trim() || !time?.trim()) {
+    if (!task.trim() || !date.trim() || !time.trim()) {
         return res.status(400).json({
             message: 'All fields (task, date, and time) are required.'
         });
