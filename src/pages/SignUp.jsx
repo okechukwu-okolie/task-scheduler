@@ -35,6 +35,7 @@ const SignUp = () => {
           email,
           password
         })
+        
         navigate('/scheduler')
       } catch (error) {
         if(error.response.data.message === "Username already exists"){

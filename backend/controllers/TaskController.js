@@ -1,4 +1,5 @@
 import { Task } from "../models/taskModel.js"
+import mongoose from "mongoose"
 
 
 export const createTask = async (req, res) => {
@@ -48,21 +49,71 @@ export const createTask = async (req, res) => {
 
 
 
+// export const getTasks = async (req, res) => {
+//     try {
+//         // 1. Fetch tasks and "populate" the user field with only the username
+//         const tasks = await Task.find({ user: req.user?.id })
+//             .sort({ createdAt: -1 })
+//             .populate('user', 'username'); // This pulls 'username' from the User collection
 
-export const getTasks = async(req, res) =>{
+            
+
+//         // 2. Handle the case where no tasks exist yet
+//         // We can grab the username from the first task if it exists
+//         const username = tasks.length > 0 ? tasks[0].user.username : "User";
+
+//         res.status(200).json({
+//             message: 'Tasks fetched successfully',
+//             data: tasks,
+//             username: username
+//         });
+//     } catch (error) {
+//         console.error('Error fetching tasks:', error);
+//         res.status(500).json({
+//             message: 'Internal server error'
+//         });
+//     }
+// };
+
+
+
+export const getTasks = async (req, res) => {
     try {
-        const tasks = await Task.find({user: req.user.id}).sort({createdAt: -1})
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        // 1. Fetch tasks
+        const tasks = await Task.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .populate('user', 'username');
+
+        // 2. Safe Username Extraction
+        // Check if tasks exist AND if the first task successfully populated the user object
+        let displayUsername = "User";
+        
+        if (tasks && tasks.length > 0 && tasks[0].user) {
+            displayUsername = tasks[0].user.username;
+        } 
+
+        // 3. Always return a 200, even if data is an empty array []
         res.status(200).json({
-            message:'Tasks fetched successfully',
-            data: tasks
-        })
+            message: tasks.length > 0 ? 'Tasks fetched successfully' : 'No tasks found',
+            data: tasks, // This will be [] if no tasks exist, which is what React expects
+            username: displayUsername
+        });
+
     } catch (error) {
-        console.log(error)
+        console.error('Error fetching tasks:', error);
         res.status(500).json({
-            message:'Internal server error'
-        })
+            message: 'Internal server error'
+        });
     }
-}
+};
+
+
 
 
 
@@ -90,8 +141,16 @@ export const updateTask = async(req, res) =>{
 
 export const deleteTask = async(req, res) =>{
     const {id} = req.params
+
+    // Check if the ID provided is a valid MongoDB ObjectId
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //     return res.status(400).json({ message: 'Invalid Task ID format' });
+    // }
     try {
-        await Task.findByIdAndDelete(id)
+        const task = await Task.findByIdAndDelete(id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
         res.status(200).json({
             message:'Task deleted successfully'
         })
