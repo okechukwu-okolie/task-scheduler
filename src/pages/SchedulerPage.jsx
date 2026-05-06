@@ -43,7 +43,7 @@ const SchedulerPage = () => {
     e.preventDefault();
 
     // FIX: Check for empty fields and set error state
-    if (!task.trim() || !date.trim() || !time.trim()) {
+    if (!task || !date.trim() || !time.trim()) {
       return setInputError(true);
     }
     setInputError(false);
