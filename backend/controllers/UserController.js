@@ -95,7 +95,7 @@ export const userSignIn = async (req, res) => {
       token: generateTk(existingUser._id),
       message: "User successfully logged in.",
     });
-    
+
   } catch (error) {
     console.log("Internal Error", error);
     res.status(500).json({
@@ -103,3 +103,5 @@ export const userSignIn = async (req, res) => {
     });
   }
 };
+
+

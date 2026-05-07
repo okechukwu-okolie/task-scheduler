@@ -46,37 +46,6 @@ export const createTask = async (req, res) => {
 
 
 
-
-
-
-// export const getTasks = async (req, res) => {
-//     try {
-//         // 1. Fetch tasks and "populate" the user field with only the username
-//         const tasks = await Task.find({ user: req.user?.id })
-//             .sort({ createdAt: -1 })
-//             .populate('user', 'username'); // This pulls 'username' from the User collection
-
-            
-
-//         // 2. Handle the case where no tasks exist yet
-//         // We can grab the username from the first task if it exists
-//         const username = tasks.length > 0 ? tasks[0].user.username : "User";
-
-//         res.status(200).json({
-//             message: 'Tasks fetched successfully',
-//             data: tasks,
-//             username: username
-//         });
-//     } catch (error) {
-//         console.error('Error fetching tasks:', error);
-//         res.status(500).json({
-//             message: 'Internal server error'
-//         });
-//     }
-// };
-
-
-
 export const getTasks = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -142,10 +111,7 @@ export const updateTask = async(req, res) =>{
 export const deleteTask = async(req, res) =>{
     const {id} = req.params
 
-    // Check if the ID provided is a valid MongoDB ObjectId
-    // if (!mongoose.Types.ObjectId.isValid(id)) {
-    //     return res.status(400).json({ message: 'Invalid Task ID format' });
-    // }
+  
     try {
         const task = await Task.findByIdAndDelete(id);
         if (!task) {

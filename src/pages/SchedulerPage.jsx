@@ -2,12 +2,16 @@ import { FaCheck, FaEdit, FaRegUserCircle, FaTrash } from "react-icons/fa";
 import Button from "../components/Button.jsx";
 import { useEffect, useState } from "react";
 import instance from "../files/axios.Create.jsx";
+import { Link } from "react-router-dom";
 
 
 const SchedulerPage = () => {
   const [task, setTask] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState(false);
   const [taskcreated, setTaskCreated] = useState(false);
   const [inputError, setInputError] = useState(false);
   const [schedules, setSchedules] = useState([]);
@@ -17,15 +21,18 @@ const SchedulerPage = () => {
 
 //this useeffect is for fetching the tasks from the database and setting it to the state variable schedules. It runs only once when the component mounts.
     useEffect (()=>{
-      // const fetchTasks = async()=>
-      //   try {
-      //     const res = await instance.get('/api/getTasks')
-      //     setSchedules(res.data.data)
-      //   } catch (error) {
-      //     console.log(error)
-      //   }
-      // }
-      // fetchTasks()
+      const fetchTasks = async()=>{
+        try {
+          const res = await instance.get('/getTasks') || [];
+          setSchedules(res.data.data)
+          setUsername(res.data.username) // Set the username from the response
+          setLoading(false)
+        } catch (error) {
+          console.log(error)
+          setLoading(false)
+        }
+      }
+      fetchTasks()
   },[])
 
   const handleSubmit = async(e)=> {
@@ -38,6 +45,7 @@ const SchedulerPage = () => {
     const schedule = { task, date, time, completed: false };
     
     if(task && date && time){
+      const your_jwt_token = localStorage.getItem('token'); // Retrieve the token from localStorage
       try {
         const res = await instance.post("/createTask", schedule, {
           headers: { Authorization: `Bearer ${your_jwt_token}` },
@@ -62,9 +70,10 @@ const SchedulerPage = () => {
           setInputError(false);
         }, 3000);
       }
-
-
   };
+  }
+
+
 
 
 
@@ -111,7 +120,7 @@ const handleStrikeThrough = async (id, currentStatus) => {
   // or set an 'isEditing' state with the ID to perform a PUT request later.
   setSchedules(schedules.filter(i => i._id !== item._id));
 };
-}
+
 
 
   return (
@@ -121,7 +130,7 @@ const handleStrikeThrough = async (id, currentStatus) => {
           <Link to="/">Task Logger</Link>
         </h2>
         <p className="flex justify-center items-center gap-1">
-          {userName || "User"}
+          {username || "User"}
           <span>
             <FaRegUserCircle size={25} />
           </span>
@@ -206,44 +215,50 @@ const handleStrikeThrough = async (id, currentStatus) => {
       <div className="m-3 ">
         <h2 className="text-2xl font-semibold">Scheduled Task</h2>
         <div className="max-h-45 overflow-y-auto border-gray-900 p-2">
-          {schedules.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white m-3 flex justify-between items-center px-3 rounded-2xl"
-            >
-          
-              <div>
-                <div
-                  className=
-                  {
-                    strikeThrough
-                      ? "line-through text-green-400 text-bold"
-                      : 
-                      "text-bold"
-                  }
-                  onChange={() => handleStrikeThrough(item.id)}
-                >
-                  {item.task}
+          {loading ? (
+            <p className="text-center">Loading...</p>
+          ) : schedules.length === 0 ? (
+            <p className="text-center">No scheduled tasks.</p>
+          ) : (
+            schedules.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white m-3 flex justify-between items-center px-3 rounded-2xl"
+              >
+                <div>
+                  <div
+                    className={
+                      currentStatus
+                        ? "line-through text-green-400 text-bold"
+                        : "text-bold"
+                    }
+                    // onClick={() => handleStrikeThrough(item._id)}
+                  >
+                    {item.task}
+                  </div>
+                  <div
+                    className={
+                      currentStatus
+                        ? "line-through text-green-400 text-center"
+                        : "text-bold"
+                    }
+                  >
+                    <span>{item.date}</span> <span>{item.time}</span>
+                  </div>
                 </div>
-                <div
-                  className={
-                    strikeThrough
-                      ? "line-through text-green-400 text-center"
-                      : "text-bold"
-                  }
-                >
-                  <span>{item.date}</span> <span>{item.time}</span>
+                <div className="flex justify-between align-center gap-2">
+                  <FaEdit color="sky-blue " onClick={() => handleEdit(item._id)} />
+                  <FaTrash color="red " onClick={() => handleDelete(item._id)} />
+                  <FaCheck color="green " onClick={() => handleStrikeThrough(item._id, currentStatus)} />
                 </div>
-              </div>
-              <div className="flex justify-between align-center gap-2">
-                <FaEdit color="sky-blue " onClick={()=>handleEdit(item.id)} />
-                <FaTrash color="red " onClick={() => handleDelete(item.id)} />
-                <FaCheck color="green " onClick={()=>handleStrikeThrough(item.id)}/>
               </div>
             ))
           )}
         </div>
       </div>
+
+
+
       <div className="text-center mt-4">
         <Button
           link="/task-logger"
