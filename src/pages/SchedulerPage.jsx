@@ -5,7 +5,7 @@ import instance from "../files/axios.Create.jsx";
 import { Link } from "react-router-dom";
 
 
-const SchedulerPage = () => {
+const SchedulerPage =()  => {
   const [task, setTask] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -14,10 +14,10 @@ const SchedulerPage = () => {
   const [currentStatus, setCurrentStatus] = useState(false);
   const [taskcreated, setTaskCreated] = useState(false);
   const [inputError, setInputError] = useState(false);
-  const [schedules, setSchedules] = useState([]);
   const [strikeThrough, setStrikeThrough] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  // const [editing, setEditing] = useState([])
+  const [schedules, setSchedules] = useState([]);
+  const [completedTask, setCompletedTask] = useState([]);
+
 
 //this useeffect is for fetching the tasks from the database and setting it to the state variable schedules. It runs only once when the component mounts.
     useEffect (()=>{
@@ -89,26 +89,51 @@ const SchedulerPage = () => {
   }
 };
 
- 
 
-
+// const handleStrikeThrough = async (id, currentStatus) => {
+//   try {
+//     // FIX: Toggle the completed status in the database
+//     await instance.patch(`/updateTask/${id}`, { completed: !currentStatus });
+    
+//     // Update local state to show the strike-through
+//     setSchedules(schedules.map(item => 
+//       item._id === id ? { ...item, completed: !currentStatus } : item
+//     ));
+//   } catch (error) {
+//     console.error("Toggle failed:", error);
+//   }
+// };
 
 const handleStrikeThrough = async (id, currentStatus) => {
   try {
-    // FIX: Toggle the completed status in the database
-    await instance.patch(`/updateTask/${id}`, { completed: !currentStatus });
+    // 1. Send the flipped status to the backend
+    const res = await instance.put(`/updateTask/${id}`, { 
+      completed: !currentStatus 
+    });
     
-    // Update local state to show the strike-through
-    setSchedules(schedules.map(item => 
-      item._id === id ? { ...item, completed: !currentStatus } : item
-    ));
+    // 2. Use the data returned from the server to update the UI
+    if (res.status === 200) {
+      setSchedules(prevSchedules => 
+        prevSchedules.map(item => 
+          item._id === id ? { ...item, completed: !currentStatus } : item
+        )
+      );
+    }
+    //i want to add all the completed tasks and create an api call to save them in the completed task log page. I will create a new state variable called completedTask and set it to the completed tasks. Then I will create a new api call to save the completed tasks in the database and then redirect to the completed task log page.
+    if (!currentStatus) { // Only add to completedTask if it's being marked as completed
+      const completedTaskData = res.data.data; // Assuming the updated task is returned in res.data.data
+      setCompletedTask(prev => [...prev, completedTaskData]);
+        await instance.post("/completedTask", completedTaskData, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+
+    }
   } catch (error) {
     console.error("Toggle failed:", error);
   }
 };
 
-
-
+console.log(completedTask)
 
  const handleEdit = (item) => {
   // FIX: Populate the form fields with the existing task data
@@ -222,13 +247,13 @@ const handleStrikeThrough = async (id, currentStatus) => {
           ) : (
             schedules.map((item) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="bg-white m-3 flex justify-between items-center px-3 rounded-2xl"
               >
                 <div>
                   <div
                     className={
-                      currentStatus
+                      item.completed
                         ? "line-through text-green-400 text-bold"
                         : "text-bold"
                     }
@@ -238,7 +263,7 @@ const handleStrikeThrough = async (id, currentStatus) => {
                   </div>
                   <div
                     className={
-                      currentStatus
+                      item.completed
                         ? "line-through text-green-400 text-center"
                         : "text-bold"
                     }

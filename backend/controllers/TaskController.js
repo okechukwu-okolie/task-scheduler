@@ -1,5 +1,5 @@
+import mongoose from 'mongoose';
 import { Task } from "../models/taskModel.js"
-import mongoose from "mongoose"
 
 
 export const createTask = async (req, res) => {
@@ -83,29 +83,57 @@ export const getTasks = async (req, res) => {
 };
 
 
+// export const updateTask = async(req, res) =>{
+//     const {id} = req.params
+//     const {task, date, time, completed} = req.body
+//     try {
+//         const updatedTask = await Task.findByIdAndUpdate(id, {task, date, time, completed}, {new: true})
+//         res.status(200).json({
+//             message:'Task updated successfully',
+//             data: updatedTask
+//         })
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).json({
+//             message:'Internal server error'
+//         })
+//     }
+// }
 
 
 
 
 
+export const updateTask = async (req, res) => {
+    const { id } = req.params;
+    // We only pull what is sent in the body of the api call, which could be any subset of the task fields (like just 'completed' for strike-through)
+    const updates = req.body; 
 
-
-export const updateTask = async(req, res) =>{
-    const {id} = req.params
-    const {task, date, time, completed} = req.body
-    try {
-        const updatedTask = await Task.findByIdAndUpdate(id, {task, date, time, completed}, {new: true})
-        res.status(200).json({
-            message:'Task updated successfully',
-            data: updatedTask
-        })
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({
-            message:'Internal server error'
-        })
+    // 1. Safety Check: Is the ID valid?
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid Task ID format' });
     }
-}
+
+    try {
+        // 2. Use 'updates' to only change the fields provided (like 'completed')
+        // { new: true } returns the document AFTER the change is made
+        console.log("Received Update Request for Task ID:", id);
+        const updatedTask = await Task.findByIdAndUpdate(id, updates, { new: true });
+        console.log("Updated Task:", updatedTask);
+
+        if (!updatedTask) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        res.status(200).json({
+            message: 'Task updated successfully',
+            data: updatedTask
+        });
+    } catch (error) {
+        console.error("Update Error:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 
 export const deleteTask = async(req, res) =>{
@@ -127,3 +155,31 @@ export const deleteTask = async(req, res) =>{
         })
     }
 }
+
+
+//i want to create a new controller function called toggleTaskCompletion that will toggle the completed status of a task. I will use this function in the SchedulerPage.jsx file to toggle the completed status of a task when the user clicks on the task. I will also update the getTasks function to return the completed status of each task so that I can display it in the SchedulerPage.jsx file.
+
+export const toggleTaskCompletion = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Find the task by ID . this is a Gaurd Clause to ensure the task exists before we try to toggle it
+        const task = await Task.findById(id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        // 2. Toggle the completed status
+        task.completed = !task.completed;
+
+        // 3. Save the updated task
+        const updatedTask = await task.save();
+
+        res.status(200).json({
+            message: 'Task completion status toggled successfully',
+            data: updatedTask
+        });
+    } catch (error) {
+        console.error("Toggle Error:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
