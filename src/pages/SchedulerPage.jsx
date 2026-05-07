@@ -14,7 +14,6 @@ const SchedulerPage =()  => {
   const [currentStatus, setCurrentStatus] = useState(false);
   const [taskcreated, setTaskCreated] = useState(false);
   const [inputError, setInputError] = useState(false);
-  const [strikeThrough, setStrikeThrough] = useState(false);
   const [schedules, setSchedules] = useState([]);
   const [completedTask, setCompletedTask] = useState([]);
 
@@ -90,20 +89,6 @@ const SchedulerPage =()  => {
 };
 
 
-// const handleStrikeThrough = async (id, currentStatus) => {
-//   try {
-//     // FIX: Toggle the completed status in the database
-//     await instance.patch(`/updateTask/${id}`, { completed: !currentStatus });
-    
-//     // Update local state to show the strike-through
-//     setSchedules(schedules.map(item => 
-//       item._id === id ? { ...item, completed: !currentStatus } : item
-//     ));
-//   } catch (error) {
-//     console.error("Toggle failed:", error);
-//   }
-// };
-
 const handleStrikeThrough = async (id, currentStatus) => {
   try {
     // 1. Send the flipped status to the backend
@@ -119,21 +104,12 @@ const handleStrikeThrough = async (id, currentStatus) => {
         )
       );
     }
-    //i want to add all the completed tasks and create an api call to save them in the completed task log page. I will create a new state variable called completedTask and set it to the completed tasks. Then I will create a new api call to save the completed tasks in the database and then redirect to the completed task log page.
-    if (!currentStatus) { // Only add to completedTask if it's being marked as completed
-      const completedTaskData = res.data.data; // Assuming the updated task is returned in res.data.data
-      setCompletedTask(prev => [...prev, completedTaskData]);
-        await instance.post("/completedTask", completedTaskData, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-
-    }
+   
   } catch (error) {
     console.error("Toggle failed:", error);
   }
 };
 
-console.log(completedTask)
 
  const handleEdit = (item) => {
   // FIX: Populate the form fields with the existing task data
@@ -257,7 +233,7 @@ console.log(completedTask)
                         ? "line-through text-green-400 text-bold"
                         : "text-bold"
                     }
-                    // onClick={() => handleStrikeThrough(item._id)}
+                   
                   >
                     {item.task}
                   </div>
@@ -272,7 +248,7 @@ console.log(completedTask)
                   </div>
                 </div>
                 <div className="flex justify-between align-center gap-2">
-                  <FaEdit color="sky-blue " onClick={() => handleEdit(item._id)} />
+                  <FaEdit color="sky-blue " onClick={() => handleEdit(item)} />
                   <FaTrash color="red " onClick={() => handleDelete(item._id)} />
                   <FaCheck color="green " onClick={() => handleStrikeThrough(item._id, currentStatus)} />
                 </div>
