@@ -35,6 +35,7 @@ const SignUp = () => {
           email,
           password
         })
+        
         navigate('/scheduler')
       } catch (error) {
         if(error.response.data.message === "Username already exists"){
@@ -55,18 +56,7 @@ const SignUp = () => {
             setEmailError(false)
           }, 3000);
         }
-    
-        
-     
-
-
     }
-
-
-   
-    
-
-
   }
 
 

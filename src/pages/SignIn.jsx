@@ -38,6 +38,7 @@ const SignIn = () => {
       // Axios considers any 2xx status a success. 
       // Checking for res.data.token is usually safer than a specific status code.
       if (res.data && res.data.token) {
+        // console.log('Login successful:', res.data,'Token:', res.data.token);
         localStorage.setItem('token', res.data.token);
         setUsername('');
         setPassword('');

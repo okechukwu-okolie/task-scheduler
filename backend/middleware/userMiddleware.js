@@ -9,7 +9,7 @@ export const protect = async (req, res, next) => {
     let token;
 
     // Check if the header exists and starts with 'Bearer'
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (req.headers.authorization  && req.headers.authorization.startsWith('Bearer')) {
         try {
             // Get token from header (split "Bearer <token>")
             token = req.headers.authorization.split(' ')[1];
@@ -21,8 +21,9 @@ export const protect = async (req, res, next) => {
             req.user = await User.findById(decoded.id).select('-password');
             
             next(); // Move to the controller
+
         } catch (error) {
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            res.status(401).json({ message: 'Not authorized, token failed' , error: error.message});
         }
     }
 
@@ -34,8 +35,8 @@ export const protect = async (req, res, next) => {
 
 
 //here the token for user validation is generated here, the token will be used in the frontend to validate the user and to access the protected routes
-export const generateToken = (id) =>{
+export const generateTk = (id) =>{
     return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d',
+        expiresIn: '29d',
     });
 }

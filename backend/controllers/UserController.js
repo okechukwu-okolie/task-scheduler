@@ -1,7 +1,7 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { generateToken } from "../middleware/userMiddleware.js";
+import { generateTk } from "../middleware/userMiddleware.js";
 dotenv.config();
 
 export const userSignUp = async (req, res) => {
@@ -47,7 +47,7 @@ export const userSignUp = async (req, res) => {
 
     res.status(201).json({
       message: "User created successfully",
-      token: generateToken(newUser._id),
+      token: generateTk(newUser._id),// generating token for the user to access protected routes
     });   
     
 
@@ -92,7 +92,7 @@ export const userSignIn = async (req, res) => {
       _id: existingUser._id,
       username: existingUser.username,
       email: existingUser.email,
-      token: generateToken(existingUser._id),
+      token: generateTk(existingUser._id),
       message: "User successfully logged in.",
     });
     
