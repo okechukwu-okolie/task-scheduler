@@ -9,6 +9,7 @@ const SignIn = () => {
   
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [err, setErr] = useState(false);  // Empty fields error
   const [err1, setErr1] = useState(false); // Server/Auth error
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const SignIn = () => {
       // Log the specific response from the server to debug the 400 error
       if (error.response) {
         console.error('Server Refused Request:', error.response.data);
+        setErrorMessage(error.response.data.message);
       } else {
         console.error('Login Failed:', error.message);
       }
@@ -95,8 +97,8 @@ const SignIn = () => {
          
 
 
-              <div className='-mt-4 px-8 '>{err && <p className='text-red-700 text-[15px]'>Invalid credentials error 1</p>}</div>
-              <div className='-mt-4 px-8 '>{err1 && <p className='text-red-700 text-[15px]'>Invalid credentials error 2</p>}</div>
+              <div className='-mt-4 px-8 '>{err && <p className='text-red-700 text-[15px]'>{errorMessage}</p>}</div>
+              <div className='-mt-4 px-8 '>{err1 && <p className='text-red-700 text-[15px]'>{errorMessage}</p>}</div>
             <button className='bg-blue-500  w-60 h-12 rounded-[7px] mx-8 mt-10'>Sign In</button>
 
             <div className='text-center text-[18px]'>

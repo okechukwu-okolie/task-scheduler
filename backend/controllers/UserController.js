@@ -43,7 +43,8 @@ export const userSignUp = async (req, res) => {
     }
 
     console.log("user created successfully");
-    console.log(newUser)
+    // console.log(newUser)
+
     res.status(201).json({
       message: "User created successfully",
       token: generateToken(newUser._id),
@@ -94,6 +95,7 @@ export const userSignIn = async (req, res) => {
       token: generateToken(existingUser._id),
       message: "User successfully logged in.",
     });
+    
   } catch (error) {
     console.log("Internal Error", error);
     res.status(500).json({
