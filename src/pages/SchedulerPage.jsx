@@ -4,125 +4,126 @@ import { useEffect, useState } from "react";
 import instance from "../files/axios.Create.jsx";
 import { Link } from "react-router-dom";
 
-
-const SchedulerPage =()  => {
+const SchedulerPage = ({ schedules, setSchedules, username, setUsername }) => {
   const [task, setTask] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentStatus, setCurrentStatus] = useState(false);
-  const [taskcreated, setTaskCreated] = useState(false);
+  // const [taskcreated, setTaskCreated] = useState(false);
   const [inputError, setInputError] = useState(false);
-  const [schedules, setSchedules] = useState([]);
   const [completedTask, setCompletedTask] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
-
-//this useeffect is for fetching the tasks from the database and setting it to the state variable schedules. It runs only once when the component mounts.
-    useEffect (()=>{
-      const fetchTasks = async()=>{
-        try {
-          const res = await instance.get('/getTasks') || [];
-          setSchedules(res.data.data)
-          setUsername(res.data.username) // Set the username from the response
-          setLoading(false)
-        } catch (error) {
-          console.log(error)
-          setLoading(false)
-        }
-      }
-      fetchTasks()
-  },[])
-
-  const handleSubmit = async(e)=> {
-    e.preventDefault();
-
-    if (!task.trim() || !date.trim() || !time.trim() ) {
-      return setInputError(true);
-    }
-    setInputError(false);
-    const schedule = { task, date, time, completed: false };
-    
-    if(task && date && time){
-      const your_jwt_token = localStorage.getItem('token'); // Retrieve the token from localStorage
+  //this useeffect is for fetching the tasks from the database and setting it to the state variable schedules. It runs only once when the component mounts.
+  useEffect(() => {
+    const fetchTasks = async () => {
       try {
-        const res = await instance.post("/createTask", schedule, {
-          headers: { Authorization: `Bearer ${your_jwt_token}` },
-        });
-        console.log("Task created successfully:", res.data);
-
-        if (res.status === 201) {
-          setTaskCreated(true);
-          setSchedules((prev) => [res.data.data, ...prev]); // Add new task to the top of the list
-
-          setTask("");
-          setDate("");
-          setTime("");
-        }
+        const res = (await instance.get("/getTasks")) || [];
+        setSchedules(res.data.data);
+        setUsername(res.data.username); // Set the username from the response
+        setLoading(false);
       } catch (error) {
-        console.log('there was an error creating the task',error)
-        
+        console.log(error);
+        setLoading(false);
       }
-      finally{
-        setTimeout(() => {
-          setTaskCreated(false);
-          setInputError(false);
-        }, 3000);
-      }
-  };
+    };
+    fetchTasks();
+  }, []);
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!task.trim() || !date.trim() || !time.trim()) {
+    return setInputError(true);
   }
+  setInputError(false);
 
+  const schedule = { task, date, time, completed: false };
+  const your_jwt_token = localStorage.getItem("token");
 
-
-
-
- const handleDelete = async (id) => {
   try {
-    // FIX: Delete from database first
-    await instance.delete(`/deleteTask/${id}`);
-    
-    // Then update the local state (filtering by MongoDB _id)
-    setSchedules(schedules.filter((item) => item._id !== id));
-  } catch (error) {
-    console.error("Delete failed:", error);
-  }
-};
+    // FIX: Check if we're in editing mode by checking if editingId is set
+    if (editingId) {
+      // --- UPDATE LOGIC ---
+      const res = await instance.put(`/updateTask/${editingId}`, schedule, {
+        headers: { Authorization: `Bearer ${your_jwt_token}` },
+      });
 
-
-const handleStrikeThrough = async (id, currentStatus) => {
-  try {
-    // 1. Send the flipped status to the backend
-    const res = await instance.put(`/updateTask/${id}`, { 
-      completed: !currentStatus 
-    });
-    
-    // 2. Use the data returned from the server to update the UI
-    if (res.status === 200) {
-      setSchedules(prevSchedules => 
-        prevSchedules.map(item => 
-          item._id === id ? { ...item, completed: !currentStatus } : item
-        )
+      // FIX: Don't do setSchedules(res.data.data) if it's one object.
+      // Instead, map through the old list and swap the edited one.
+      setSchedules((prev) =>
+        prev.map((item) => (item._id === editingId ? res.data.data : item))
       );
+      
+      setEditingId(null); // Stop editing mode
+      console.log("Task updated successfully");
+
+    } else {
+      // --- CREATE LOGIC ---
+      const res = await instance.post("/createTask", schedule, {
+        headers: { Authorization: `Bearer ${your_jwt_token}` },
+      });
+
+      if (res.status === 201) {
+        // setTaskCreated(true);
+        // Add the new task to the existing list
+        setSchedules((prev) => [res.data.data, ...prev]);
+      }
     }
-   
+
+    // Always clear the form after success
+    setTask("");
+    setDate("");
+    setTime("");
+
   } catch (error) {
-    console.error("Toggle failed:", error);
+    console.error("Operation failed:", error);
   }
-};
+  };
 
+  const handleDelete = async (id) => {
+    try {
+      // FIX: Delete from database first
+      await instance.delete(`/deleteTask/${id}`);
 
- const handleEdit = (item) => {
-  // FIX: Populate the form fields with the existing task data
-  setTask(item.task);
-  setDate(item.date);
-  setTime(item.time);
-  
-  // Optional: Remove from list to "replace" it upon resubmit, 
-  // or set an 'isEditing' state with the ID to perform a PUT request later.
-  setSchedules(schedules.filter(i => i._id !== item._id));
-};
+      // Then update the local state (filtering by MongoDB _id)
+      setSchedules(schedules.filter((item) => item._id !== id));
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
 
+  const handleStrikeThrough = async (id, currentStatus) => {
+    try {
+      // 1. Send the flipped status to the backend
+      const res = await instance.put(`/updateTask/${id}`, {
+        completed: !currentStatus,
+      });
 
+      // 2. Use the data returned from the server to update the UI
+      if (res.status === 200) {
+        setSchedules((prevSchedules) =>
+          prevSchedules.map((item) =>
+            item._id === id ? { ...item, completed: !currentStatus } : item,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error("Toggle failed:", error);
+    }
+  };
+
+  const handleEdit = async (item) => {
+    // FIX: Populate the form fields with the existing task data
+    setTask(item.task);
+    setDate(item.date);
+    setTime(item.time);
+
+    // Optional: Remove from list to "replace" it upon resubmit,
+    // or set an 'isEditing' state with the ID to perform a PUT request later.
+    setEditingId(item._id); // Store the ID of the task being edited
+  };
 
   return (
     <div className="min-h-screen bg-blue-100 flex flex-col ">
@@ -139,13 +140,15 @@ const handleStrikeThrough = async (id, currentStatus) => {
       </div>
 
       <form
+      id="schedulerPage"
         onSubmit={handleSubmit}
         className="bg-white m-3 flex flex-col p-4 rounded-2xl"
       >
         <h2 className="text-semibold text-[18px]">Enter Task Title</h2>
 
-        <label htmlFor="" className="block mb-2"></label>
+        <label htmlFor="task" className="block mb-2"></label>
         <input
+        id="task"
           type="text"
           value={task}
           onChange={(e) => setTask(e.target.value)}
@@ -157,12 +160,13 @@ const handleStrikeThrough = async (id, currentStatus) => {
           <div className="flex justify-between">
             <div>
               <label
-                htmlFor=""
+                htmlFor="date"
                 className="block text-bold underline text-[16px]"
               >
                 Date
               </label>
               <input
+              id="date"
                 type="date"
                 name=""
                 _id=""
@@ -172,12 +176,13 @@ const handleStrikeThrough = async (id, currentStatus) => {
             </div>
             <div>
               <label
-                htmlFor=""
+                htmlFor="time"
                 className="block text-bold underline text-[16px]"
               >
                 Time
               </label>
               <input
+                id="time"
                 type="time"
                 name=""
                 _id=""
@@ -199,23 +204,16 @@ const handleStrikeThrough = async (id, currentStatus) => {
                 Input all the fields before adding a task.
               </p>
             )}
-            {/* {taskCreated && (
-              <p className="text-green-500">
-                Task created successfully!
-              </p>
-            )}     */}
+          
           </div>
         </div>
       </form>
 
-
-
-
-{/* 
+      {/* 
 //the scheduled tasks are displayed here. The tasks are mapped from the schedules state variable and displayed in a card format. Each task has a delete, edit and strike-through button. The delete button deletes the task from the database and updates the state variable. The edit button populates the form fields with the existing task data for editing. The strike-through button toggles the completed status of the task in the database and updates the local state to show the strike-through effect. */}
       <div className="m-3 ">
         <h2 className="text-2xl font-semibold">Scheduled Task</h2>
-        <div className="max-h-45 overflow-y-auto border-gray-900 p-2">
+        <div className="max-h-45 overflow-y-auto bg-blue-300 rounded-xl border-gray-900 p-2">
           {loading ? (
             <p className="text-center">Loading...</p>
           ) : schedules.length === 0 ? (
@@ -233,7 +231,6 @@ const handleStrikeThrough = async (id, currentStatus) => {
                         ? "line-through text-green-400 text-bold"
                         : "text-bold"
                     }
-                   
                   >
                     {item.task}
                   </div>
@@ -249,8 +246,14 @@ const handleStrikeThrough = async (id, currentStatus) => {
                 </div>
                 <div className="flex justify-between align-center gap-2">
                   <FaEdit color="sky-blue " onClick={() => handleEdit(item)} />
-                  <FaTrash color="red " onClick={() => handleDelete(item._id)} />
-                  <FaCheck color="green " onClick={() => handleStrikeThrough(item._id, currentStatus)} />
+                  <FaTrash
+                    color="red "
+                    onClick={() => handleDelete(item._id)}
+                  />
+                  <FaCheck
+                    color="green "
+                    onClick={() => handleStrikeThrough(item._id, currentStatus)}
+                  />
                 </div>
               </div>
             ))
@@ -258,12 +261,10 @@ const handleStrikeThrough = async (id, currentStatus) => {
         </div>
       </div>
 
-
-
       <div className="text-center mt-4">
         <Button
           link="/task-logger"
-          styling="bg-white w-75 h-12 rounded-[7px]  fixed bottom-4 right-10"
+          styling="bg-white w-75 h-12 rounded-[7px]  "
           title="View Completed Task Log"
         />
       </div>
